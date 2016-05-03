@@ -5,3 +5,4 @@ authors = ["dualhorn16 <dustin-horner@uiowa.edu>"]
 
 [dependencies]
 rand = "0.3"
+ncurses = "5.80.0"

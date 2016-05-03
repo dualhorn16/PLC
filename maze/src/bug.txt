@@ -1,0 +1,51 @@
+A maze of size 7 is coming up!
+    =============================
+Start   |       |   |   |       |
+    =   =   =   =   =   =   =====
+    |       |                   |
+    =   =============   =========
+    |   |       |           |   |
+    =====   =====   =========   =
+    |               |   |       |
+    =   =   =========   =   =====
+    |   |                   |   |
+    =   =   =========   =====   =
+    |   |   |                   |
+    =   =   =================   =
+    |   |               |        End
+    =============================
+
+x: 0 and y: 0
+this is the direction: 1
+
+x: 0 and y: 1
+this is the direction: 0
+
+x: 1 and y: 1
+this is the direction: 2
+
+x: 0 and y: 1
+this is the direction: 1
+
+x: 0 and y: 2
+this is the direction: 3
+
+x: 0 and y: 1
+this is the direction: 3
+
+x: 0 and y: 0
+this is the direction: 3
+
+x: 0 and y: 0
+this is the direction: 1
+
+x: 0 and y: 2
+this is the direction: 3
+
+x: 0 and y: 1
+this is the direction: 3
+
+x: 0 and y: 0
+this is the direction: 3
+
+x: 0 and y: 0

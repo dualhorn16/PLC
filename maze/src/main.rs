@@ -2,7 +2,7 @@ use std::io;
 extern crate rand;
 use rand::Rng;
 use std::collections::HashMap;
-
+use std::io::prelude::*;
 
 
 pub const RIGHT: usize = 0;
@@ -305,25 +305,84 @@ fn print_maze(size: usize, graph: Vec<Vec<Edge>>){
     }
 }
 
+fn print_position(position: usize, size: usize, graph: Vec<Vec<Edge>>){
+    for i in 0 .. size {
+        print!("    =");
+        for j in 0 .. size {
+            if i != 0 {
+                if (!graph[i * size + j][3].deleted) || (graph[i * size + j][3].dumdum){
+                        print!("====");
+                    }
+                    else {
+                        print!("   =");
+                    }
+            }
+            else {
+                print!("====");
+            }
+        }
+        println!("");
+        if i == 0 {
+            print!("Start");
+        }
+        else {
+            print!("    |");
+        }
+        for j in 0 .. size {
+            if i == size-1 && j == size-1{
+                println!("    End");
+                
+            }
+            else if (!graph[i * size + j][0].deleted) ||  graph[i * size + j][0].dumdum {
+                if position == i * size + j{
+                    print!(" x |");
+                }
+                else {
+                    print!("   |");
+                }
+            }
+            else{
+                if position == i * size + j{
+                    print!(" x  ");
+                }
+                else {
+                    print!("    ");
+                }
+            }
+        }
+        if i == size - 1 {
+            print!("    =");
+            for j in 0 .. size {
+                print!("====");
+            }
+        }
+        println!("");    
+    }
+}
+
+
 fn find_solution(x: usize, y: usize, size: usize, mut graph: Vec<Vec<Edge>>) -> bool{
     //println!("You called FIND SOLUTION WITH: x:{} y:{} ",x,y);
     //let mut sol_vec:Vec<Vec<bool>> = vec![vec![false;4];size*size];
     let mut maze_solution = HashMap::new();
     if x == size - 1 && y == size - 1{ return true; }
 
-    // println!("\ny: {:?}\n", y);
+     //println!("\nx: {:?} and y: {:?}", x, y);
     // println!("\nx: {:?}\n", x);
     for i in 0 .. 4 {
-        if graph[y * size + x][i].deleted {
+        if graph[y * size + x][i].deleted && !graph[y * size + x][i].used{
             if graph[y * size + x][i].used {
                 return false;
             }
+            //println!("this is the direction: {:?}", i);
             graph[y * size + x][i].used = true;
+            
             if i == 0 {
-                //println!("\nI: {:?}\n", i);
+                graph[y * size + x + 1][LEFT].used = true;
+                // println!("\nI: {:?}\n", i);
                 if find_solution(x+1,y,size,graph.clone()){
-                    // println!("\ny * size + x {:?}\n", y * size + x);
-                    // println!("\n i: {:?}\n", i);
+                    //println!("\ny * size + x {:?}\n", y * size + x);
+                    //println!("\n i: {:?}\n", i);
                     //sol_vec[y * size + x][i] = true;
                     maze_solution.insert(y * size + x, "right");
                     for (index, direction) in &maze_solution {
@@ -332,7 +391,8 @@ fn find_solution(x: usize, y: usize, size: usize, mut graph: Vec<Vec<Edge>>) -> 
                     return true;
                 }
             }
-            if i == 1{
+            if i == 1 {
+                graph[(y+1) * size + x][UP].used = true;
                 //println!("\nI: {:?}\n", i);
                 if find_solution(x,y+1,size,graph.clone()){
                     // println!("\ny * size + x {:?}\n", y * size + x);
@@ -345,7 +405,8 @@ fn find_solution(x: usize, y: usize, size: usize, mut graph: Vec<Vec<Edge>>) -> 
                     return true;
                 }
             }
-            if i == 2{
+            if i == 2 {
+                graph[y * size + x - 1][RIGHT].used = true;
                 //println!("\nI: {:?}\n", i);
                 if find_solution(x-1,y,size,graph.clone()){
                     // println!("\ny * size + x {:?}\n", y * size + x);
@@ -358,7 +419,8 @@ fn find_solution(x: usize, y: usize, size: usize, mut graph: Vec<Vec<Edge>>) -> 
                     return true;
                 }
             }
-            if i == 3{
+            if i == 3 {
+                graph[(y-1) * size + x][DOWN].used = true;
                 //println!("\nI: {:?}\n", i);
                 if find_solution(x,y-1,size,graph.clone()){
                     // println!("\ny * size + x {:?}\n", y * size + x);
@@ -378,6 +440,8 @@ fn find_solution(x: usize, y: usize, size: usize, mut graph: Vec<Vec<Edge>>) -> 
     // for (index, direction) in &maze_solution {
     //     println!("{}: \"{}\"", index, direction);
     // }
+    // println!("");
+    // println!("You called FIND SOLUTION WITH: x:{} y:{} ",x,y);
     // println!("");
     return false;
 }
@@ -402,6 +466,7 @@ fn clear_used(mut graph: Vec<Vec<Edge>>, size: usize) -> Vec<Vec<Edge>> {
 
 fn main() {    
     
+
     let mut input = String::new();
     println!("Please enter the size of maze requested: ");
     io::stdin()
@@ -453,6 +518,68 @@ fn main() {
     // }
 
     print_maze(size.clone(), graph2.clone());
+
+    print_position(0, size.clone(), graph2.clone());
+    
+    let mut not_solved = true;
+    let mut position:usize = 0;
+    let mut movement:String = "".to_string();
+
+    while not_solved {
+
+        let mut dir = String::new();
+        println!("W,A,S,D Controls movement thru maze, enter a direction to go:");
+        io::stdin()
+            .read_line(&mut dir)
+            .expect("failed to read from console");
+
+        let trimmed = dir.trim();
+        
+        match trimmed.parse::<String>() {
+            Ok(i) => movement = i,
+            Err(..) => println!("You did not enter a valid direction: {}", trimmed)
+        };
+        //println!("This is MOVEMENT: {:?}", movement);
+        if movement == "w" || movement == "W"{
+            if graph2[position][3].deleted {
+                position = position - size;
+                print_position(position, size.clone(), graph2.clone());
+            }
+            else{
+                print_position(position, size.clone(), graph2.clone());
+            }
+        } 
+        else if movement == "a" || movement == "A"{
+            if graph2[position][2].deleted {
+                position = position - 1;
+                print_position(position, size.clone(), graph2.clone());
+            }
+            else{
+                print_position(position, size.clone(), graph2.clone());
+            }
+        } 
+        else if movement == "s" || movement == "S"{
+            if graph2[position][1].deleted {
+                position = position + size;
+                print_position(position, size.clone(), graph2.clone());
+            }
+            else{
+                print_position(position, size.clone(), graph2.clone());
+            }
+        } 
+        else if movement == "d" || movement == "D"{
+            if graph2[position][0].deleted {
+                position = position +1 ;
+                print_position(position, size.clone(), graph2.clone());
+            }
+            else{
+                print_position(position, size.clone(), graph2.clone());
+            }
+        } 
+        if position == size * size - 1 {
+            not_solved = false;
+        } 
+    }
 
     find_solution(0,0,size, graph2.clone());
 
