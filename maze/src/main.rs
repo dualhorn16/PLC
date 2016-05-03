@@ -1,11 +1,20 @@
 use std::io;
 extern crate rand;
 use rand::Rng;
+use std::collections::HashMap;
+
+
 
 pub const RIGHT: usize = 0;
 pub const DOWN: usize = 1;
 pub const LEFT: usize = 2;
 pub const UP: usize = 3;
+pub struct Solution {
+    path: Vec<Vec<usize>>,
+}
+// static mut BOARD:Solution = Solution{
+//     path: vec![vec![]],
+// };
  
 #[derive(Debug, Clone, Copy)]
 pub struct Point {
@@ -148,6 +157,7 @@ fn init_maze(input: usize) ->(Vec<Vec<Edge>>) {
         board.push(innervec);
         
     }
+    //println!("THIS IS BOARD: {:?}", board);
     return graph.clone();
 }
 
@@ -155,28 +165,11 @@ fn mk_maze(size:usize, mut graph: Vec<Vec<Edge>>, mut tree: Vec<Vec<usize>>) ->(
     
     let mut count_of_roots = size * size;
     let mut rng = rand::thread_rng();
-    // let boarder:Point = Point{
-    //     x:0,
-    //     y:0,
-    //     visited:true,
-    // };
-    // let dummy:Edge = Edge {
-    //     p: boarder,
-    //     d: 0,
-    //     used: true,
-    //     deleted: false,
-    //     dumdum: true,
-    // } ;
+   
     while count_of_roots != 1 {
         let random_index = rng.gen::<usize>() % (size * size);
         let random_dir = rng.gen::<usize>() % 4;
-        // println!("this is random_index: {:?}", random_index);
-        // println!("this is random_dir: {:?}", random_dir);
-        // println!("");
-        // //println!("this is graph:  {:?}", graph);
-        // println!("this is dumdum: {:?}", graph[random_index][random_dir].dumdum);
-        // println!("this is used: {:?}", graph[random_index][random_dir].used);
-        // println!("this is deleted: {:?}", graph[random_index][random_dir].deleted);
+        
         if (!graph[random_index][random_dir].dumdum) || (!graph[random_index][random_dir].used &&
             !graph[random_index][random_dir].deleted)
             {
@@ -188,13 +181,9 @@ fn mk_maze(size:usize, mut graph: Vec<Vec<Edge>>, mut tree: Vec<Vec<usize>>) ->(
                 let b = find(random_index+1, tree.clone());
                 //BELOW: IF not in same set then set delete and combine the sets and decrease num of sets by 1.
                 if a != b {
-                    // println!("random_index: {:?}", random_index);
-                    // println!("random_dir: {:?}", random_dir);
-                    // println!("got right:");
-                    // println!("a: {:?}", a);
-                    // println!("b: {:?}", b);
-                    graph[random_index][random_dir].deleted = true;
-                    //graph[random_index+1][random_dir].deleted = true;
+                    
+                    graph[random_index][RIGHT].deleted = true;
+                    graph[random_index+1][LEFT].deleted = true;
                     tree = union(a,b,tree.clone());
                     count_of_roots = count_of_roots - 1;
                 }
@@ -210,13 +199,9 @@ fn mk_maze(size:usize, mut graph: Vec<Vec<Edge>>, mut tree: Vec<Vec<usize>>) ->(
                 let b = find(random_index+size,tree.clone());
                 //BELOW: IF not in same set then set delete and combine the sets and decrease num of sets by 1.
                 if a != b {
-                    // println!("random_index: {:?}", random_index);
-                    // println!("random_dir: {:?}", random_dir);
-                    // println!("got down:");
-                    // println!("a: {:?}", a);
-                    // println!("b: {:?}", b);
-                    graph[random_index][random_dir].deleted = true;
-                    //graph[random_index+size][random_dir].deleted = true;
+                    
+                    graph[random_index][DOWN].deleted = true;
+                    graph[random_index+size][UP].deleted = true;
                     tree = union(a,b,tree.clone());
                     count_of_roots = count_of_roots - 1;
                 }
@@ -232,15 +217,9 @@ fn mk_maze(size:usize, mut graph: Vec<Vec<Edge>>, mut tree: Vec<Vec<usize>>) ->(
                 let b = find(random_index-1, tree.clone());
                 //BELOW: IF not in same set then set delete and combine the sets and decrease num of sets by 1.
                 if a != b {
-                    // println!("random_index: {:?}", random_index);
-                    // println!("random_dir: {:?}", random_dir);
-                    // println!("got left:");
-                    // println!("a: {:?}", a);
-                    // println!("b: {:?}", b);
-                    graph[random_index][random_dir].deleted = true;
-                    // if !graph[random_index-1][random_dir].dumdum {
-                    //     graph[random_index-1][(random_dir + 2) % 4].deleted = true;
-                    // }
+                    
+                    graph[random_index][LEFT].deleted = true;
+                    graph[random_index-1][RIGHT].deleted = true;
                     tree = union(a,b,tree.clone());
                     count_of_roots = count_of_roots - 1;
                 }
@@ -256,15 +235,9 @@ fn mk_maze(size:usize, mut graph: Vec<Vec<Edge>>, mut tree: Vec<Vec<usize>>) ->(
                 let b = find(random_index-size,tree.clone());
                 //BELOW: IF not in same set then set delete and combine the sets and decrease num of sets by 1.
                 if a != b {
-                    // println!("random_index: {:?}", random_index);
-                    // println!("random_dir: {:?}", random_dir);
-                    // println!("got up:");
-                    // println!("a: {:?}", a);
-                    // println!("b: {:?}", b);
-                    graph[random_index][random_dir].deleted = true;
-                    // if !graph[random_index-size][random_dir].dumdum {
-                    //     graph[random_index-size][(random_dir + 2) % 4].deleted = true;
-                    // }
+                   
+                    graph[random_index][UP].deleted = true;
+                    graph[random_index-size][DOWN].deleted = true;
                     tree = union(a,b,tree.clone());
                     count_of_roots = count_of_roots - 1;
                 }
@@ -273,11 +246,11 @@ fn mk_maze(size:usize, mut graph: Vec<Vec<Edge>>, mut tree: Vec<Vec<usize>>) ->(
                     graph[random_index][random_dir].used = true;
                 }
             }
-            // println!("count_of_roots: {:?}", count_of_roots);
         }
     }
-    // println!("final tree: {:?}", tree);
-    return graph.clone(); 
+
+    //println!("final tree: {:?}", tree);
+    return clear_used(graph.clone(),size.clone()); 
 }
 
 
@@ -286,7 +259,7 @@ fn print_maze(size: usize, graph: Vec<Vec<Edge>>){
         print!("    =");
         for j in 0 .. size {
             if i != 0 {
-                if (!graph[i * size + j][3].deleted && !graph[(i-1) * size + j][1].deleted) || (graph[i * size + j][3].dumdum){
+                if (!graph[i * size + j][3].deleted) || (graph[i * size + j][3].dumdum){
                         print!("====");
                     }
                     else {
@@ -294,12 +267,13 @@ fn print_maze(size: usize, graph: Vec<Vec<Edge>>){
                     }
             }
             else {
-                if !graph[i * size + j][3].deleted {
-                    print!("====");
-                }
-                else {
-                        print!("   =");
-                }
+                print!("====");
+                // if !graph[i * size + j][3].deleted {
+                //     print!("====");
+                // }
+                // else {
+                //         print!("   =");
+                // }
             }
         }
         println!("");
@@ -314,7 +288,7 @@ fn print_maze(size: usize, graph: Vec<Vec<Edge>>){
                 println!("    End");
                 
             }
-            else if (!graph[i * size + j][0].deleted && !graph[(i * size + j) + 1][2].deleted) ||  graph[i * size + j][0].dumdum {
+            else if (!graph[i * size + j][0].deleted) ||  graph[i * size + j][0].dumdum {
                 print!("   |");
             }
             else{
@@ -322,7 +296,7 @@ fn print_maze(size: usize, graph: Vec<Vec<Edge>>){
             }
         }
         if i == size - 1 {
-            print!("    -");
+            print!("    =");
             for j in 0 .. size {
                 print!("====");
             }
@@ -330,6 +304,99 @@ fn print_maze(size: usize, graph: Vec<Vec<Edge>>){
         println!("");    
     }
 }
+
+fn find_solution(x: usize, y: usize, size: usize, mut graph: Vec<Vec<Edge>>) -> bool{
+    //println!("You called FIND SOLUTION WITH: x:{} y:{} ",x,y);
+    //let mut sol_vec:Vec<Vec<bool>> = vec![vec![false;4];size*size];
+    let mut maze_solution = HashMap::new();
+    if x == size - 1 && y == size - 1{ return true; }
+
+    // println!("\ny: {:?}\n", y);
+    // println!("\nx: {:?}\n", x);
+    for i in 0 .. 4 {
+        if graph[y * size + x][i].deleted {
+            if graph[y * size + x][i].used {
+                return false;
+            }
+            graph[y * size + x][i].used = true;
+            if i == 0 {
+                //println!("\nI: {:?}\n", i);
+                if find_solution(x+1,y,size,graph.clone()){
+                    // println!("\ny * size + x {:?}\n", y * size + x);
+                    // println!("\n i: {:?}\n", i);
+                    //sol_vec[y * size + x][i] = true;
+                    maze_solution.insert(y * size + x, "right");
+                    for (index, direction) in &maze_solution {
+                        println!("{}: \"{}\"", index, direction);
+                    }
+                    return true;
+                }
+            }
+            if i == 1{
+                //println!("\nI: {:?}\n", i);
+                if find_solution(x,y+1,size,graph.clone()){
+                    // println!("\ny * size + x {:?}\n", y * size + x);
+                    // println!("\n i: {:?}\n", i);
+                    //sol_vec[y * size + x][i] = true;
+                    maze_solution.insert(y * size + x, "down");
+                    for (index, direction) in &maze_solution {
+                        println!("{}: \"{}\"", index, direction);
+                    }
+                    return true;
+                }
+            }
+            if i == 2{
+                //println!("\nI: {:?}\n", i);
+                if find_solution(x-1,y,size,graph.clone()){
+                    // println!("\ny * size + x {:?}\n", y * size + x);
+                    // println!("\n i: {:?}\n", i);
+                    //sol_vec[y * size + x][i] = true;
+                    maze_solution.insert(y * size + x, "left");
+                    for (index, direction) in &maze_solution {
+                        println!("{}: \"{}\"", index, direction);
+                    }
+                    return true;
+                }
+            }
+            if i == 3{
+                //println!("\nI: {:?}\n", i);
+                if find_solution(x,y-1,size,graph.clone()){
+                    // println!("\ny * size + x {:?}\n", y * size + x);
+                    // println!("\n i: {:?}\n", i);
+                    //sol_vec[y * size + x][i] = true;
+                    maze_solution.insert(y * size + x, "up");
+                    for (index, direction) in &maze_solution {
+                        println!("{}: \"{}\"", index, direction);
+                    }
+                    return true;
+                }
+            }
+        }
+    }
+    // println!("");
+    // println!("SOLUTION: {:?}", sol_vec);
+    // for (index, direction) in &maze_solution {
+    //     println!("{}: \"{}\"", index, direction);
+    // }
+    // println!("");
+    return false;
+}
+
+fn clear_used(mut graph: Vec<Vec<Edge>>, size: usize) -> Vec<Vec<Edge>> {
+    let total = size * size;
+    for x in 0 .. total {
+        for i in 0 .. 3 {
+            if !graph[x][i].dumdum {
+                graph[x][i].used = false;
+            }
+        }
+    }
+    return graph.clone();
+}
+
+// fn visit(start: usize, size:usize, graph:Vec<Vec<Edge>>) -> Vec<Vec<usize>>{
+//     unimplemented!();
+// }
 
 
 
@@ -361,13 +428,14 @@ fn main() {
     // println!("length of graph: {:?}", tree.len());
     // println!("tree[15]: {:?}", tree[15][0]);
     // println!("length of inner: {:?}", tree[1].len());
+    
     let mut graph2 = init_maze(size.clone());
+    
     // for x in graph2.iter(){
     //     println!("BEFORE inside iter(){:?}", x);
     //     println!("");
     //     println!("");
     // }
-
 
     //print_maze(size.clone(), graph2.clone());
     // println!("length of graph: {:?}", graph2.len());
@@ -384,7 +452,11 @@ fn main() {
     //     println!("");
     // }
 
-    print_maze(size.clone(), graph2);
+    print_maze(size.clone(), graph2.clone());
+
+    find_solution(0,0,size, graph2.clone());
+
+
     
 
 }
