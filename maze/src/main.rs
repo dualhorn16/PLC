@@ -3,7 +3,7 @@ extern crate rand;
 use rand::Rng;
 use std::collections::HashMap;
 use std::io::prelude::*;
-
+use std::collections::LinkedList;
 
 pub const RIGHT: usize = 0;
 pub const DOWN: usize = 1;
@@ -12,9 +12,6 @@ pub const UP: usize = 3;
 pub struct Solution {
     path: Vec<Vec<usize>>,
 }
-// static mut BOARD:Solution = Solution{
-//     path: vec![vec![]],
-// };
  
 #[derive(Debug, Clone, Copy)]
 pub struct Point {
@@ -39,14 +36,12 @@ pub struct Size {
 pub struct Board {
     points: Vec<Vec<Point>>
 }
-fn find(mut a: usize, mut tree: Vec<Vec<usize>>) -> (usize) {
 
+fn find(mut a: usize, mut tree: Vec<Vec<usize>>) -> (usize) {
     let mut temp = a.clone();
-    
     while tree[temp][0] != 999999{
             temp = tree[temp][0];
     }
-
     if a != temp{
         let mut k = tree[a][0];
         while k != temp{
@@ -55,13 +50,10 @@ fn find(mut a: usize, mut tree: Vec<Vec<usize>>) -> (usize) {
             k = tree[k][0];
         }
     }
-
     return temp;
 }
 
 fn union(a: usize, b: usize, mut tree: Vec<Vec<usize>>) -> (Vec<Vec<usize>>) {
-    // println!("tree before: {:?}", tree);
-    // println!("");
     let rank_a = tree[a][1];
     let rank_b = tree[b][1];
     if rank_a < rank_b {
@@ -74,8 +66,6 @@ fn union(a: usize, b: usize, mut tree: Vec<Vec<usize>>) -> (Vec<Vec<usize>>) {
         tree[a][1] = tree[a][1] + 1;
         tree[b][0] = a;
     }
-    // println!("tree after: {:?}", tree);
-    // println!("");
     return tree;
 }
 
@@ -157,7 +147,6 @@ fn init_maze(input: usize) ->(Vec<Vec<Edge>>) {
         board.push(innervec);
         
     }
-    //println!("THIS IS BOARD: {:?}", board);
     return graph.clone();
 }
 
@@ -248,7 +237,6 @@ fn mk_maze(size:usize, mut graph: Vec<Vec<Edge>>, mut tree: Vec<Vec<usize>>) ->(
             }
         }
     }
-
     //println!("final tree: {:?}", tree);
     return clear_used(graph.clone(),size.clone()); 
 }
@@ -268,12 +256,6 @@ fn print_maze(size: usize, graph: Vec<Vec<Edge>>){
             }
             else {
                 print!("====");
-                // if !graph[i * size + j][3].deleted {
-                //     print!("====");
-                // }
-                // else {
-                //         print!("   =");
-                // }
             }
         }
         println!("");
@@ -458,11 +440,6 @@ fn clear_used(mut graph: Vec<Vec<Edge>>, size: usize) -> Vec<Vec<Edge>> {
     return graph.clone();
 }
 
-// fn visit(start: usize, size:usize, graph:Vec<Vec<Edge>>) -> Vec<Vec<usize>>{
-//     unimplemented!();
-// }
-
-
 
 fn main() {    
     
@@ -489,42 +466,25 @@ fn main() {
     for innervec in tree.iter_mut(){
         innervec[1] = 0;
     } 
-    // println!("this is tree: {:?}", tree);
-    // println!("length of graph: {:?}", tree.len());
-    // println!("tree[15]: {:?}", tree[15][0]);
-    // println!("length of inner: {:?}", tree[1].len());
     
     let mut graph2 = init_maze(size.clone());
-    
-    // for x in graph2.iter(){
-    //     println!("BEFORE inside iter(){:?}", x);
-    //     println!("");
-    //     println!("");
-    // }
 
-    //print_maze(size.clone(), graph2.clone());
-    // println!("length of graph: {:?}", graph2.len());
-    // println!("length of inner: {:?}", graph2[1].len());
-    // println!("graph[2][1]: {:?}", graph2[2][1]);
-    // println!("graph[15][3]: {:?}", graph2[15][3]);
-    // println!("graph[16][0]: {:?}", graph2[15][0]);
-    // println!("graph[16][1]: {:?}", graph2[15][1]);
     graph2 = mk_maze(size.clone(), graph2.clone(), tree.clone());
-    //println!("final graph: {:?}", graph2);
 
     // for x in graph2.iter(){
     //     println!("inside iter(){:?}", x);
     //     println!("");
     // }
 
-    print_maze(size.clone(), graph2.clone());
+    //print_maze(size.clone(), graph2.clone());
 
     print_position(0, size.clone(), graph2.clone());
     
     let mut not_solved = true;
     let mut position:usize = 0;
     let mut movement:String = "".to_string();
-
+    let mut player_moves = LinkedList::new();
+    player_moves.push_back(position);
     while not_solved {
 
         let mut dir = String::new();
@@ -543,6 +503,7 @@ fn main() {
         if movement == "w" || movement == "W"{
             if graph2[position][3].deleted {
                 position = position - size;
+                player_moves.push_back(position);
                 print_position(position, size.clone(), graph2.clone());
             }
             else{
@@ -552,6 +513,7 @@ fn main() {
         else if movement == "a" || movement == "A"{
             if graph2[position][2].deleted {
                 position = position - 1;
+                player_moves.push_back(position);
                 print_position(position, size.clone(), graph2.clone());
             }
             else{
@@ -561,6 +523,7 @@ fn main() {
         else if movement == "s" || movement == "S"{
             if graph2[position][1].deleted {
                 position = position + size;
+                player_moves.push_back(position);
                 print_position(position, size.clone(), graph2.clone());
             }
             else{
@@ -569,7 +532,8 @@ fn main() {
         } 
         else if movement == "d" || movement == "D"{
             if graph2[position][0].deleted {
-                position = position +1 ;
+                position = position + 1 ;
+                player_moves.push_back(position);
                 print_position(position, size.clone(), graph2.clone());
             }
             else{
@@ -577,13 +541,25 @@ fn main() {
             }
         } 
         if position == size * size - 1 {
+
             not_solved = false;
+
+            println!("");
+            println!("  _________________  .____ ____   _______________________ ._._.");
+            println!(" /   _____/\\_____  \\ |    |\\   \\ /   /\\_   _____/\\______ \\| | |");
+            println!(" \\_____  \\  /   |   \\|    | \\   Y   /  |    __)_  |    |  \\ | |");
+            println!(" /        \\/    |    \\    |__\\     /   |        \\ |    `   \\|\\|");
+            println!("/_______  /\\_______  /_______ \\___/   /_______  //_______  /___");
+            println!("        \\/         \\/        \\/               \\/         \\/\\/\\/");
+            println!("");
+            println!("   HERE WAS THE IDEAL SOLUTION (maybe):");
+
+            
         } 
     }
+    
+    println!("this is player move histroy: {:?}", player_moves);
 
     find_solution(0,0,size, graph2.clone());
-
-
-    
 
 }
