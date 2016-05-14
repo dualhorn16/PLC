@@ -428,6 +428,161 @@ fn find_solution(x: usize, y: usize, size: usize, mut graph: Vec<Vec<Edge>>) -> 
     return false;
 }
 
+fn find_solution2(x: usize, y: usize, size: usize, graph: Vec<Vec<Edge>>) -> Vec<usize>{
+    
+    
+    let mut not_solved = true;
+    let final_position = size * size - 1;
+    let mut heading = RIGHT;
+    let mut loc = y * size + x;
+    let mut solver_hist = Vec::new();
+    let mut hashsolve = HashMap::new();
+    let mut indexer = 0;
+    while not_solved {
+
+        let mut try_dir = 0;
+
+        for i in 1 .. 5 {
+            
+            if heading == RIGHT {
+                match i {
+                    1 =>{
+                        try_dir = 1;
+                        },
+                    2 =>{
+                        try_dir = 0;
+                        },
+                    3 =>{
+                        try_dir = 3;
+                        },
+                    4 =>{
+                        try_dir = 2;
+                        },
+                    _ => unimplemented!(),
+                }
+            }
+            else if heading == DOWN {
+                //println!("this is DOWN and I: {:?}", i);
+                if i == 1 {
+                    try_dir = 2;
+                }
+                else if i == 2 {
+                    try_dir = 1;
+                }
+                else if i == 3 {
+                    try_dir = 0;
+                }
+                else if i == 4 {
+                    try_dir = 3;
+                }
+            }
+            else if heading == UP {
+                match i {
+                    1 =>{
+                        try_dir = 0;
+                        },
+                    2 =>{
+                        try_dir = 3;
+                        },
+                    3 =>{
+                        try_dir = 2;
+                        },
+                    4 =>{
+                        try_dir = 1;
+                        },
+                    _ => unimplemented!(),
+                }
+            }
+            else if heading == LEFT {
+                match i {
+                    1 =>{
+                        try_dir = 3;
+                        },
+                    2 =>{
+                        try_dir = 2;
+                        },
+                    3 =>{
+                        try_dir = 1;
+                        },
+                    4 =>{
+                        try_dir = 0;
+                        },
+                    _ => unimplemented!(),
+                }
+            }
+            
+            if graph[loc][try_dir].deleted {
+                //println!("location before!!: {:?}", loc);
+                let mut temp:Vec<usize> = vec![loc;1];
+                if i != 4 {
+                //     solver_hist.push_back(loc);
+                // }
+                    solver_hist.append(&mut temp);
+                    hashsolve.insert(loc,indexer);
+                    indexer = indexer + 1;
+                }
+                
+                match try_dir {
+                    RIGHT => loc = loc + 1,
+                    DOWN => loc = loc + size,
+                    LEFT => loc = loc - 1,
+                    UP => loc = loc - size,
+                    _ => unimplemented!(),
+                }
+                heading = try_dir;
+
+                if loc == final_position {
+                    temp = vec![loc;1];
+                    solver_hist.append(&mut temp);
+                    hashsolve.insert(loc,indexer);
+                    indexer = indexer + 1;
+                    // println!("this is LOCATION: {:?}", loc);
+                    // println!("this is heading: {:?}", heading);
+                    not_solved = false; 
+                }
+                break; 
+            }
+        }
+    }
+    //println!("THIS IS SOLVER HIST: {:?}", solver_hist);
+    
+    let mut range = 0 .. solver_hist.len();
+    let mut sol = vec![];
+    let mut new_range = 9999 .. 10000;
+    for index in range {
+        let examine = solver_hist[index].clone();
+        //println!("\nsolver_hist in loop: {:?}", solver_hist);
+        //println!("index of outter loop {:?}", index);
+        //println!("this is solverhist.len(): {:?}", solver_hist.len());
+        let range2 = index + 1 .. solver_hist.len();
+        if index >= new_range.start && index <= new_range.end {    
+            continue; 
+        }
+        else {
+            sol.push(examine);
+        }
+        //println!("sol: {:?}", sol);
+        
+        for index2 in range2 {
+            // println!("index  : {:?}", index);
+            // println!("index2 :{:?}", index2);
+            let examine2 = solver_hist[index2].clone();
+            // println!("examine: {:?}", examine);
+            // println!("examine2: {:?}", examine2);
+            
+            if examine == examine2 {
+
+                //println!("low range to SKIP: {:?}", index);
+                //println!("high range to SKIP {:?}", (index2+1));
+                new_range = index .. (index2);
+                //println!("GOT HERE");
+            }
+        }
+
+    }
+    return sol;
+}
+
 fn clear_used(mut graph: Vec<Vec<Edge>>, size: usize) -> Vec<Vec<Edge>> {
     let total = size * size;
     for x in 0 .. total {
@@ -485,9 +640,15 @@ fn main() {
     let mut movement:String = "".to_string();
     let mut player_moves = LinkedList::new();
     player_moves.push_back(position);
+    
     while not_solved {
-
+        
+        std::process::Command::new("clear").status().unwrap();
+        
+        print_position(position, size.clone(), graph2.clone());
+        
         let mut dir = String::new();
+        
         println!("W,A,S,D Controls movement thru maze, enter a direction to go:");
         io::stdin()
             .read_line(&mut dir)
@@ -499,51 +660,40 @@ fn main() {
             Ok(i) => movement = i,
             Err(..) => println!("You did not enter a valid direction: {}", trimmed)
         };
-        //println!("This is MOVEMENT: {:?}", movement);
+        
         if movement == "w" || movement == "W"{
             if graph2[position][3].deleted {
                 position = position - size;
                 player_moves.push_back(position);
-                print_position(position, size.clone(), graph2.clone());
-            }
-            else{
-                print_position(position, size.clone(), graph2.clone());
             }
         } 
         else if movement == "a" || movement == "A"{
             if graph2[position][2].deleted {
                 position = position - 1;
                 player_moves.push_back(position);
-                print_position(position, size.clone(), graph2.clone());
-            }
-            else{
-                print_position(position, size.clone(), graph2.clone());
             }
         } 
         else if movement == "s" || movement == "S"{
             if graph2[position][1].deleted {
                 position = position + size;
                 player_moves.push_back(position);
-                print_position(position, size.clone(), graph2.clone());
-            }
-            else{
-                print_position(position, size.clone(), graph2.clone());
             }
         } 
         else if movement == "d" || movement == "D"{
             if graph2[position][0].deleted {
                 position = position + 1 ;
                 player_moves.push_back(position);
-                print_position(position, size.clone(), graph2.clone());
-            }
-            else{
-                print_position(position, size.clone(), graph2.clone());
             }
         } 
+        else{
+            println!("You did not enter a valid direction: {}", movement); 
+        }
         if position == size * size - 1 {
 
             not_solved = false;
-
+            
+            std::process::Command::new("clear").status().unwrap();
+            print_position(position, size.clone(), graph2.clone());
             println!("");
             println!("  _________________  .____ ____   _______________________ ._._.");
             println!(" /   _____/\\_____  \\ |    |\\   \\ /   /\\_   _____/\\______ \\| | |");
@@ -553,13 +703,23 @@ fn main() {
             println!("        \\/         \\/        \\/               \\/         \\/\\/\\/");
             println!("");
             println!("   HERE WAS THE IDEAL SOLUTION (maybe):");
-
-            
         } 
+
     }
     
     println!("this is player move histroy: {:?}", player_moves);
 
-    find_solution(0,0,size, graph2.clone());
+    //find_solution(0,0,size, graph2.clone());
+
+    graph2 = clear_used(graph2.clone(),size.clone());
+    println!("going to search for solution now");
+    let solution = find_solution2(0, 0, size.clone(), graph2.clone());
+    println!("found a solution now printing: {:?}", solution);
+    println!("this is player move history: {:?}", player_moves);
+    // for item in 0 .. size*size{
+    //     if solution.contains_key(&item){
+    //         println!("This is in hash solution: {:?} {:?}", item, solution.get(&item));
+    //     }
+    // }
 
 }
