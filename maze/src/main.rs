@@ -1,3 +1,6 @@
+#![allow(dead_code)]
+#![allow(unused_variables)]
+
 use std::io;
 extern crate rand;
 use rand::Rng;
@@ -9,11 +12,14 @@ pub const RIGHT: usize = 0;
 pub const DOWN: usize = 1;
 pub const LEFT: usize = 2;
 pub const UP: usize = 3;
+
+#[allow(dead_code)]
 pub struct Solution {
     path: Vec<Vec<usize>>,
 }
  
 #[derive(Debug, Clone, Copy)]
+#[allow(dead_code)]
 pub struct Point {
     x: usize,
     y: usize,
@@ -21,6 +27,7 @@ pub struct Point {
 }
 
 #[derive(Debug, Clone, Copy)]
+#[allow(dead_code)]
 pub struct Edge {
     p: Point,
     d: usize,
@@ -32,7 +39,7 @@ pub struct Edge {
 pub struct Size {
     size:usize,
 }
-
+#[allow(dead_code)]
 pub struct Board {
     points: Vec<Vec<Point>>
 }
@@ -241,6 +248,8 @@ fn mk_maze(size:usize, mut graph: Vec<Vec<Edge>>, mut tree: Vec<Vec<usize>>) ->(
     return clear_used(graph.clone(),size.clone()); 
 }
 
+//THIS vvvv function was used to initially ensure the proper printing of maze boxes before creation.
+//Function still works, but is no longer called so to avoid warning at compile time it has been commented out.
 
 fn print_maze(size: usize, graph: Vec<Vec<Edge>>){
     for i in 0 .. size {
@@ -342,30 +351,27 @@ fn print_position(position: usize, size: usize, graph: Vec<Vec<Edge>>){
     }
 }
 
+//THIS vvvvv function was initial attempt to find a maze solution using recursion.  This does actually work, however
+//only for trivially small mazes, has a bug somewhere, and thought it more efficient to go a different route with 
+//solution as opposed to banging head against wall.
 
 fn find_solution(x: usize, y: usize, size: usize, mut graph: Vec<Vec<Edge>>) -> bool{
-    //println!("You called FIND SOLUTION WITH: x:{} y:{} ",x,y);
-    //let mut sol_vec:Vec<Vec<bool>> = vec![vec![false;4];size*size];
+
     let mut maze_solution = HashMap::new();
     if x == size - 1 && y == size - 1{ return true; }
 
-     //println!("\nx: {:?} and y: {:?}", x, y);
-    // println!("\nx: {:?}\n", x);
     for i in 0 .. 4 {
         if graph[y * size + x][i].deleted && !graph[y * size + x][i].used{
             if graph[y * size + x][i].used {
                 return false;
             }
-            //println!("this is the direction: {:?}", i);
+
             graph[y * size + x][i].used = true;
             
             if i == 0 {
                 graph[y * size + x + 1][LEFT].used = true;
-                // println!("\nI: {:?}\n", i);
+
                 if find_solution(x+1,y,size,graph.clone()){
-                    //println!("\ny * size + x {:?}\n", y * size + x);
-                    //println!("\n i: {:?}\n", i);
-                    //sol_vec[y * size + x][i] = true;
                     maze_solution.insert(y * size + x, "right");
                     for (index, direction) in &maze_solution {
                         println!("{}: \"{}\"", index, direction);
@@ -375,11 +381,8 @@ fn find_solution(x: usize, y: usize, size: usize, mut graph: Vec<Vec<Edge>>) -> 
             }
             if i == 1 {
                 graph[(y+1) * size + x][UP].used = true;
-                //println!("\nI: {:?}\n", i);
+
                 if find_solution(x,y+1,size,graph.clone()){
-                    // println!("\ny * size + x {:?}\n", y * size + x);
-                    // println!("\n i: {:?}\n", i);
-                    //sol_vec[y * size + x][i] = true;
                     maze_solution.insert(y * size + x, "down");
                     for (index, direction) in &maze_solution {
                         println!("{}: \"{}\"", index, direction);
@@ -389,11 +392,8 @@ fn find_solution(x: usize, y: usize, size: usize, mut graph: Vec<Vec<Edge>>) -> 
             }
             if i == 2 {
                 graph[y * size + x - 1][RIGHT].used = true;
-                //println!("\nI: {:?}\n", i);
+
                 if find_solution(x-1,y,size,graph.clone()){
-                    // println!("\ny * size + x {:?}\n", y * size + x);
-                    // println!("\n i: {:?}\n", i);
-                    //sol_vec[y * size + x][i] = true;
                     maze_solution.insert(y * size + x, "left");
                     for (index, direction) in &maze_solution {
                         println!("{}: \"{}\"", index, direction);
@@ -403,11 +403,8 @@ fn find_solution(x: usize, y: usize, size: usize, mut graph: Vec<Vec<Edge>>) -> 
             }
             if i == 3 {
                 graph[(y-1) * size + x][DOWN].used = true;
-                //println!("\nI: {:?}\n", i);
+
                 if find_solution(x,y-1,size,graph.clone()){
-                    // println!("\ny * size + x {:?}\n", y * size + x);
-                    // println!("\n i: {:?}\n", i);
-                    //sol_vec[y * size + x][i] = true;
                     maze_solution.insert(y * size + x, "up");
                     for (index, direction) in &maze_solution {
                         println!("{}: \"{}\"", index, direction);
@@ -417,33 +414,28 @@ fn find_solution(x: usize, y: usize, size: usize, mut graph: Vec<Vec<Edge>>) -> 
             }
         }
     }
-    // println!("");
-    // println!("SOLUTION: {:?}", sol_vec);
-    // for (index, direction) in &maze_solution {
-    //     println!("{}: \"{}\"", index, direction);
-    // }
-    // println!("");
-    // println!("You called FIND SOLUTION WITH: x:{} y:{} ",x,y);
-    // println!("");
+
     return false;
 }
 
+//THIS vvv function uses a 'right hand on wall' technique to find solution.  Each node visited is added to Vec, and 
+//after solution found, the dead ends, non-main path part of visits are pruned off the list.
+
 fn find_solution2(x: usize, y: usize, size: usize, graph: Vec<Vec<Edge>>) -> Vec<usize>{
-    
     
     let mut not_solved = true;
     let final_position = size * size - 1;
     let mut heading = RIGHT;
     let mut loc = y * size + x;
     let mut solver_hist = Vec::new();
-    let mut hashsolve = HashMap::new();
-    let mut indexer = 0;
+
     while not_solved {
 
         let mut try_dir = 0;
 
         for i in 1 .. 5 {
-            
+            //Determine preference of direction traveled based on heading of traveler.  This is what determines
+            //the right hand on wall technique.
             if heading == RIGHT {
                 match i {
                     1 =>{
@@ -463,17 +455,20 @@ fn find_solution2(x: usize, y: usize, size: usize, graph: Vec<Vec<Edge>>) -> Vec
             }
             else if heading == DOWN {
                 //println!("this is DOWN and I: {:?}", i);
-                if i == 1 {
-                    try_dir = 2;
-                }
-                else if i == 2 {
-                    try_dir = 1;
-                }
-                else if i == 3 {
-                    try_dir = 0;
-                }
-                else if i == 4 {
-                    try_dir = 3;
+                match i {
+                    1 =>{
+                        try_dir = 2;
+                        },
+                    2 =>{
+                        try_dir = 1;
+                        },
+                    3 =>{
+                        try_dir = 0;
+                        },
+                    4 =>{
+                        try_dir = 3;
+                        },
+                    _ => unimplemented!(),
                 }
             }
             else if heading == UP {
@@ -510,16 +505,14 @@ fn find_solution2(x: usize, y: usize, size: usize, graph: Vec<Vec<Edge>>) -> Vec
                     _ => unimplemented!(),
                 }
             }
-            
+            //After determining preference, then see if that choice is available to move to.
+
             if graph[loc][try_dir].deleted {
-                //println!("location before!!: {:?}", loc);
                 let mut temp:Vec<usize> = vec![loc;1];
+                
+                //if going backwards then do this 
                 if i != 4 {
-                //     solver_hist.push_back(loc);
-                // }
                     solver_hist.append(&mut temp);
-                    hashsolve.insert(loc,indexer);
-                    indexer = indexer + 1;
                 }
                 
                 match try_dir {
@@ -534,26 +527,18 @@ fn find_solution2(x: usize, y: usize, size: usize, graph: Vec<Vec<Edge>>) -> Vec
                 if loc == final_position {
                     temp = vec![loc;1];
                     solver_hist.append(&mut temp);
-                    hashsolve.insert(loc,indexer);
-                    indexer = indexer + 1;
-                    // println!("this is LOCATION: {:?}", loc);
-                    // println!("this is heading: {:?}", heading);
                     not_solved = false; 
                 }
                 break; 
             }
         }
     }
-    //println!("THIS IS SOLVER HIST: {:?}", solver_hist);
     
-    let mut range = 0 .. solver_hist.len();
+    let range = 0 .. solver_hist.len();
     let mut sol = vec![];
     let mut new_range = 9999 .. 10000;
     for index in range {
         let examine = solver_hist[index].clone();
-        //println!("\nsolver_hist in loop: {:?}", solver_hist);
-        //println!("index of outter loop {:?}", index);
-        //println!("this is solverhist.len(): {:?}", solver_hist.len());
         let range2 = index + 1 .. solver_hist.len();
         if index >= new_range.start && index <= new_range.end {    
             continue; 
@@ -561,24 +546,12 @@ fn find_solution2(x: usize, y: usize, size: usize, graph: Vec<Vec<Edge>>) -> Vec
         else {
             sol.push(examine);
         }
-        //println!("sol: {:?}", sol);
-        
         for index2 in range2 {
-            // println!("index  : {:?}", index);
-            // println!("index2 :{:?}", index2);
             let examine2 = solver_hist[index2].clone();
-            // println!("examine: {:?}", examine);
-            // println!("examine2: {:?}", examine2);
-            
             if examine == examine2 {
-
-                //println!("low range to SKIP: {:?}", index);
-                //println!("high range to SKIP {:?}", (index2+1));
                 new_range = index .. (index2);
-                //println!("GOT HERE");
             }
         }
-
     }
     return sol;
 }
@@ -598,7 +571,6 @@ fn clear_used(mut graph: Vec<Vec<Edge>>, size: usize) -> Vec<Vec<Edge>> {
 
 fn main() {    
     
-
     let mut input = String::new();
     println!("Please enter the size of maze requested: ");
     io::stdin()
@@ -626,13 +598,6 @@ fn main() {
 
     graph2 = mk_maze(size.clone(), graph2.clone(), tree.clone());
 
-    // for x in graph2.iter(){
-    //     println!("inside iter(){:?}", x);
-    //     println!("");
-    // }
-
-    //print_maze(size.clone(), graph2.clone());
-
     print_position(0, size.clone(), graph2.clone());
     
     let mut not_solved = true;
@@ -643,6 +608,7 @@ fn main() {
     
     while not_solved {
         
+        //command "clear" used for linux/unix/mac os.   If windows this has to be changed to "clr", cuz microsoft.
         std::process::Command::new("clear").status().unwrap();
         
         print_position(position, size.clone(), graph2.clone());
@@ -691,7 +657,6 @@ fn main() {
         if position == size * size - 1 {
 
             not_solved = false;
-            
             std::process::Command::new("clear").status().unwrap();
             print_position(position, size.clone(), graph2.clone());
             println!("");
@@ -702,24 +667,20 @@ fn main() {
             println!("/_______  /\\_______  /_______ \\___/   /_______  //_______  /___");
             println!("        \\/         \\/        \\/               \\/         \\/\\/\\/");
             println!("");
-            println!("   HERE WAS THE IDEAL SOLUTION (maybe):");
+            
         } 
 
     }
+
+    if not_solved == false {
+        //calculate and print score!
+    }
     
-    println!("this is player move histroy: {:?}", player_moves);
-
-    //find_solution(0,0,size, graph2.clone());
-
     graph2 = clear_used(graph2.clone(),size.clone());
-    println!("going to search for solution now");
     let solution = find_solution2(0, 0, size.clone(), graph2.clone());
-    println!("found a solution now printing: {:?}", solution);
+    
+    print!("HERE WAS THE IDEAL SOLUTION: ");
+    println!("{:?}", solution);
     println!("this is player move history: {:?}", player_moves);
-    // for item in 0 .. size*size{
-    //     if solution.contains_key(&item){
-    //         println!("This is in hash solution: {:?} {:?}", item, solution.get(&item));
-    //     }
-    // }
 
 }
